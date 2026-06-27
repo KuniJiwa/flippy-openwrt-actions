@@ -709,6 +709,21 @@ echo -e "${INFO} Disk usage before packaging:\n$(df -hT /opt/${SELECT_PACKITPATH
 # Package OpenWrt firmware
 [[ "${KERNEL_AUTO_LATEST,,}" =~ ^(true|yes)$ ]] && query_kernel
 download_kernel
+
+# Copy cleanup script to container
+cp ${GITHUB_ACTION_PATH}/cleanup.sh /tmp/cleanup.sh
+chmod +x /tmp/cleanup.sh
+
+if [ "${APPLY_CUSTOM_PATCH}" = "1" ]; then
+    echo "============================================================"
+    echo -e "${STEPS} Injecting cleanup logic..."
+    cd /opt/${SELECT_PACKITPATH}
+    sed -i '/write_uboot_to_disk/i\        sh /tmp/cleanup.sh "$TGT_ROOT"' mk_s905d_n1.sh
+    echo -e "${SUCCESS} Cleanup script inserted successfully."
+    echo "============================================================"
+    cd - > /dev/null
+fi
+
 make_openwrt
 out_github_env
 
